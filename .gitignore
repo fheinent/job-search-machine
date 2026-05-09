@@ -1,0 +1,30 @@
+# Personal context files (user fills these in)
+context-library/experience-library.md
+context-library/career-plan.md
+context-library/target-companies.md
+context-library/qa-master.md
+context-library/app-tracker.md
+context-library/connection-tracker.md
+context-library/interview-history.md
+context-library/referral-tracker.md
+
+# System files
+.DS_Store
+.env
+.env.local
+*.zip
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
