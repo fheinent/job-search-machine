@@ -1,5 +1,14 @@
 # Changelog
 
+## Recent Updates
+
+### [2026-05-10] `/company-research` — Data Freshness & Confidence Framework
+**Modified:** 2026-05-10 14:45 UTC | **Pushed:** 2026-05-10 14:47 UTC | **Commit:** ce1dcd8
+
+Added confidence levels (HIGH/MEDIUM/LOW/STALE) and per-category decay thresholds to prevent stale research (2023–2024 data) from being presented as current. Research briefs now include a "Data Freshness Notes" table. All claims require dates and confidence annotations.
+
+---
+
 ## v1.0 — May 2026
 
 ### Added
