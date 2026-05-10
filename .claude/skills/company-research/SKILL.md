@@ -7,6 +7,25 @@ description: Deep research on a target company to inform applications, work prod
 
 **UNIVERSAL PRIVACY GUARDRAIL:** When reading career-plan.md, the following information is PRIVATE and must NEVER appear in any external-facing output (messages, documents, scripts, blurbs, or coaching visible to anyone other than the user): reasons for career gaps (caregiving, health, family), reasons for remote preference (caregiving, disability, family obligations), age or graduation year, personal financial constraints, immigration/visa details beyond what the user explicitly shares, relationship status, health conditions, pregnancy/family planning, and any information marked as "private" or "confidential" in career-plan.md. This information may inform INTERNAL analysis and recommendations but must never leak into generated content. In company research contexts, this means: research briefs may use private information to filter or prioritize companies internally (e.g., filtering for sponsorship-friendly companies) but must never state the private reason in the output (e.g., write "H-1B sponsorship confirmed" not "needs sponsorship because of immigration status").
 
+## Understanding Confidence Levels
+
+All research output includes confidence scores that indicate how recent and reliable data is. Use them to decide whether to act on the research:
+
+| Level | Meaning | When to Use | When to Refresh |
+|-------|---------|------------|-----------------|
+| **HIGH** | Data verified within recency window (14-30 days for most data) | Safe to include in conversations, presentations, apply decisions | No immediate refresh needed |
+| **MEDIUM** | Data is 30-90+ days old but considered still relevant | Safe to reference but mention the date | Consider refresh before major decisions |
+| **LOW** | Data is 90+ days old or based on older sources | Use with caution; mention the age | Refresh before interviews or major decisions |
+| **STALE** | Data is >180 days old or source is explicitly archived | Do not rely on for decision-making | **Must refresh before using** |
+| **HIGH CONFIDENCE ABSENCE** | We actively searched and found NO data | Safe to say "no data available" | Only refresh if strategy changes |
+
+**Example interpretations:**
+- "Company raised $30M Series B in Nov 2022 [CONFIDENCE: HIGH - funding announcement dated Nov 15, 2022]" → Safe to cite in interview
+- "ADR growth trailed inflation in 2025 (1.6% vs. 2.7%) [CONFIDENCE: MEDIUM - Lodgify 2026 Industry Report published May 2026]" → Cite but mention source/date
+- "VP of Data departed 1 month ago [CONFIDENCE: HIGH - confirmed via LinkedIn search on 2026-05-10]" → Current, trustworthy
+- "Most recent PM hire: Jane Smith, 18 months ago [CONFIDENCE: LOW - hire date >12 months]" → Refresh LinkedIn to check if still representative
+- "No H-1B sponsorship data found [CONFIDENCE: HIGH CONFIDENCE ABSENCE - searched h1bdata.info and USCIS records, 2025 data]" → Safe to say company doesn't sponsor
+
 ## When to Use
 
 Run `/company-research [company name]` when:
@@ -29,6 +48,64 @@ Before executing any step, read `career-plan.md` and detect the user's **target 
 
 All instructions below use PM as the default. When the detected function is NOT PM, substitute function-appropriate equivalents as marked with **[FUNCTION-ADAPTIVE]** notes throughout.
 
+## Data Freshness Reference
+
+Every claim in company research includes a confidence level based on data recency. Use these thresholds to assign confidence when conducting research:
+
+### Confidence Thresholds by Data Type
+
+**COMPANY FUNDAMENTALS** (Stage, Size, Revenue, Trajectory)
+- **HIGH:** Verified within 30 days (funding announcement, latest financial disclosure, recent news)
+- **MEDIUM:** 30-90 days old (recent press release, analyst report, company blog post)
+- **LOW:** 90+ days old (older financial data, archived blog posts, year-old news)
+- **STALE:** >180 days old (requires refresh before acting)
+
+**PRODUCT INTELLIGENCE** (Recent Launches, User Sentiment, Competitive Positioning)
+- **HIGH:** Verified within 14 days (latest G2/Trustpilot reviews, recent changelog, fresh demo)
+- **MEDIUM:** 14-60 days old (moderately recent user reviews, product updates from 1-2 months ago)
+- **LOW:** 60-90 days old (user feedback from quarter ago)
+- **STALE:** >90 days old (product landscape may have shifted)
+
+**LEADERSHIP & STRATEGY** (CEO Vision, Stated Priorities, Culture Signals)
+- **HIGH:** From past 30 days (recent interview, podcast appearance, blog post)
+- **MEDIUM:** 30-120 days old (recent earnings call, company announcement, board update)
+- **LOW:** 120+ days old (older strategic statements, archived interviews)
+- **STALE:** >180 days old (strategy may have pivoted)
+
+**TEAM & HIRING** (Org Structure, Hiring Manager Identity, Recent Hires, Open Roles)
+- **HIGH:** Verified within 7 days (LinkedIn search just performed, current job board, recent hire announcement)
+- **MEDIUM:** 7-30 days old (LinkedIn data 1 month old, recent hire from weeks ago)
+- **LOW:** 30-60 days old (org chart from 1-2 months back)
+- **STALE:** >60 days old (requires re-check before relying)
+
+**H-1B SPONSORSHIP DATA**
+- **HIGH:** Current year petition data from USCIS or h1bdata.info (updated 2025)
+- **MEDIUM:** Previous year data (2024 confirmed, 2025 estimated)
+- **LOW:** 2+ year old data
+- **STALE:** >2 years old (sponsorship policy may have changed)
+
+**CAREER CHANGER PRECEDENT** (Non-traditional hires, transitions, domain switches)
+- **HIGH:** Hire within past 6 months (confirmed via LinkedIn recent activity)
+- **MEDIUM:** Hire within past 12 months
+- **LOW:** Hire 12-18 months ago (may have left company)
+- **STALE:** >18 months old (person may have churned, not representative of current hiring)
+
+### Confidence Assignment Rules
+
+- If exact research date is known → assign based on days elapsed
+- If source includes implied date (e.g., "latest earnings call" or "recent announcement") → estimate conservatively
+- If source has no date but is inherently current (e.g., "current job board") → HIGH
+- If source is archived/cached → assign based on archive date, flag as "archive source"
+- If data point is stated as "no data available" or "none found" → this is **HIGH CONFIDENCE ABSENCE** (actively searched, found nothing). Mark as such.
+- If data point was researched months ago and not re-verified → LOW or STALE, not HIGH
+
+### Warning Thresholds
+
+Automatically flag:
+- ANY data point >6 months old → "[VERIFY - researched [date]. Details may have changed.]"
+- MAJOR data point (funding, headcount, strategy) >3 months old → "[CAUTION - data from [date]. Recommend refresh.]"
+- Career changer precedent >12 months old → "[NOTE - hire from [date]. May no longer reflect current hiring patterns.]"
+
 ## Inputs
 
 **Required arguments:**
@@ -47,39 +124,43 @@ All instructions below use PM as the default. When the detected function is NOT 
 
 ### Step 1: Company Fundamentals
 
-Research and document:
+Research and document. **For each data point, note the SOURCE and DATE of the information you find.** Assign confidence levels using the Data Freshness Reference above.
 
-1. **Stage and funding:** Series A/B/C/D, public, etc. Last funding round, amount, valuation if available. Key investors.
-2. **Size:** Employee count (approximate), growth rate (hiring velocity as a signal).
+1. **Stage and funding:** Series A/B/C/D, public, etc. Last funding round, amount, valuation if available. Key investors. [Note: Funding announcements have dates; cite them. Example: "Series B, $30M, November 2022 [CONFIDENCE: HIGH - funding announcement]"]
+2. **Size:** Employee count (approximate), growth rate (hiring velocity as a signal). [Note: If from company About page or Crunchbase, cite the data age. If estimated, flag as "~[number] estimated from [source] [date]"]
 3. **Revenue model:** How do they make money? Subscription, transaction fees, marketplace, enterprise contracts?
 4. **Core product(s):** What do they actually build? Who uses it? What problem does it solve?
-5. **Recent trajectory:** Growing, flat, struggling? Any layoffs, pivots, or major wins in the last 6 months?
-6. **Visa sponsorship history (if user needs sponsorship):** If `career-plan.md` or `qa-master.md` indicates the user needs work visa sponsorship, research and document: (a) H-1B petition count from USCIS data (search: "[company] h1b data" or check h1bdata.info, myvisajobs.com), (b) Whether the company has international offices that could enable L-1 intracompany transfer (a faster, non-lottery visa path), (c) Any public statements or Glassdoor reviews about the company's immigration support quality, (d) Recent changes to sponsorship policy (some companies reduced sponsorship after layoffs). Present as: "H-1B Sponsorship: [Confirmed / Limited / No Data]. [N] petitions filed in last 3 years. International offices: [list if relevant for L-1 path]."
+5. **Recent trajectory:** Growing, flat, struggling? Any layoffs, pivots, or major wins in the last 6 months? [Note: Cite the news source and date. Flag 6+ month old data as potentially stale.]
+6. **Visa sponsorship history (if user needs sponsorship):** If `career-plan.md` or `qa-master.md` indicates the user needs work visa sponsorship, research and document: (a) H-1B petition count from USCIS data (search: "[company] h1b data" or check h1bdata.info, myvisajobs.com) — **Note the data year** (2024, 2025, etc.), (b) Whether the company has international offices that could enable L-1 intracompany transfer (a faster, non-lottery visa path), (c) Any public statements or Glassdoor reviews about the company's immigration support quality, (d) Recent changes to sponsorship policy (some companies reduced sponsorship after layoffs). Present as: "H-1B Sponsorship: [Confirmed / Limited / No Data] [CONFIDENCE: HIGH/MEDIUM/LOW]. [N] petitions filed in [year] ([data age]). International offices: [list if relevant for L-1 path]. [If >2 years old: [CAUTION - verify current sponsorship status]]"
 
 ### Step 2: Product Deep Dive
 
-Focus on the product area relevant to the target role (or the flagship product if no role specified):
+Focus on the product area relevant to the target role (or the flagship product if no role specified). **For reviews and sentiment, note the REVIEW DATE and platform. For launches, cite the announcement date.**
 
-1. **Product experience:** Sign up for the product if free/freemium. Note the onboarding flow, core UX, and any friction points. If not free, use reviews and demos.
-2. **Recent launches:** What have they shipped in the last 3-6 months? Search: "[company] product update," "[company] launch," "[company] changelog."
-3. **User sentiment:** What do users love? What do they hate? Search: G2 reviews, App Store reviews, Reddit threads, Twitter/X complaints. Pull 3-5 verbatim quotes.
-4. **Competitive positioning:** Who are the main competitors? How does this company differentiate? Where are they winning and losing?
-5. **Technical architecture (if relevant):** Any public engineering blog posts about their stack, scale challenges, or technical bets?
+1. **Product experience:** Sign up for the product if free/freemium. Note the onboarding flow, core UX, and any friction points. If not free, use reviews and demos. [Date of your review: today's date]
+2. **Recent launches:** What have they shipped in the last 3-6 months? Search: "[company] product update," "[company] launch," "[company] changelog." [For each launch, cite the announcement date. If 'recent' means >3 months, flag it: "[CAUTION - 'recent' launch is [date], now older than 3 months]"]
+3. **User sentiment:** What do users love? What do they hate? Search: G2 reviews, App Store reviews, Reddit threads, Twitter/X complaints. Pull 3-5 verbatim quotes. [For each quote, include: Source (G2/Trustpilot/etc.), rating (if available), and review date. Example: "Setting up Notion for my team was painful" (G2, 2-star, 2026-04-15) [CONFIDENCE: HIGH if <14 days, MEDIUM if <60 days, LOW if older]]
+4. **Competitive positioning:** Who are the main competitors? How does this company differentiate? Where are they winning and losing? [CONFIDENCE: MEDIUM if 30-90 days old, LOW if >90 days old]
+5. **Technical architecture (if relevant):** Any public engineering blog posts about their stack, scale challenges, or technical bets? [Note the blog post date; flag >6 month old posts as potentially outdated]
 
 ### Step 3: Strategy and Leadership
 
-1. **CEO/founder vision:** Recent interviews, podcast appearances, or blog posts from leadership. What do they say matters? Search: "[CEO name] interview," "[company] strategy."
-2. **Earnings/board updates:** For public companies or late-stage startups, search for earnings call transcripts or investor updates. What metrics do they highlight?
-3. **Stated priorities:** What is the company publicly betting on for the next 1-2 years?
-4. **Culture signals:** Glassdoor reviews (focus on PM-specific reviews), engineering blog tone, job posting language. Is it bureaucratic or scrappy? Data-driven or intuition-driven?
+**When citing leadership quotes, note the INTERVIEW/PUBLICATION DATE. Old strategic statements may be outdated.**
+
+1. **CEO/founder vision:** Recent interviews, podcast appearances, or blog posts from leadership. What do they say matters? Search: "[CEO name] interview," "[company] strategy." [For each quote, cite: source, publication name, date. Example: "We're betting on AI-first infrastructure" (CEO interview, [publication], [date]) [CONFIDENCE: HIGH if <30 days, MEDIUM if <120 days, LOW if older]]
+2. **Earnings/board updates:** For public companies or late-stage startups, search for earnings call transcripts or investor updates. What metrics do they highlight? [Note: earnings calls have dates; cite them. Flag Q2 2025 calls as potentially stale in 2026]
+3. **Stated priorities:** What is the company publicly betting on for the next 1-2 years? [If no recent strategic communication found, flag explicitly: "[LOW] No recent strategy updates found. Last confirmed: [date]. Consider refreshing before interviews."]
+4. **Culture signals:** Glassdoor reviews (focus on PM-specific reviews), engineering blog tone, job posting language. Is it bureaucratic or scrappy? Data-driven or intuition-driven? [CONFIDENCE: MEDIUM-HIGH if based on recent job postings/reviews from past 60 days, MEDIUM if older]
 
 ### Step 4: Team and Hiring Intelligence
 
-1. **Product org structure:** Who leads product? VP Product, CPO, Head of Product? Search LinkedIn.
-2. **Hiring manager identification:** For the target role, who is the most likely HM? Look at LinkedIn for the team lead one level above the role.
-3. **Team size and composition:** How many PMs? How are they organized (by product area, by function, by customer segment)?
-4. **Recent PM hires:** Search LinkedIn for people who recently joined as PMs. What backgrounds do they have? This reveals what the company actually values, not just what the JD says.
-5. **Open roles:** How many PM roles are open? A company hiring 5 PMs is in a different mode than one hiring 1.
+**LinkedIn searches are time-stamped by when you perform them. Note this date. For 'recent' hires, explicitly state hire date or when they joined.**
+
+1. **Product org structure:** Who leads product? VP Product, CPO, Head of Product? Search LinkedIn. [Note: LinkedIn data you found today is [today's date]; if you're reading old research, re-check LinkedIn]
+2. **Hiring manager identification:** For the target role, who is the most likely HM? Look at LinkedIn for the team lead one level above the role. [CONFIDENCE: HIGH if found on current job board, MEDIUM if inferred from org chart dated within 30 days, LOW if org data is >60 days old]
+3. **Team size and composition:** How many PMs? How are they organized (by product area, by function, by customer segment)? [Note data date: "[N] PMs as of [date]"]
+4. **Recent PM hires:** Search LinkedIn for people who recently joined as PMs. What backgrounds do they have? This reveals what the company actually values, not just what the JD says. [For each hire, note: name, join date (if visible or estimated), previous background. Example: "Jane Smith joined 2 months ago from McKinsey" [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months, LOW if >12 months]]
+5. **Open roles:** How many PM roles are open? A company hiring 5 PMs is in a different mode than one hiring 1. [As of [date], pulled from job board]
 
 **[FUNCTION-ADAPTIVE]** Replace PM-specific research with function-appropriate research. SWE: "Engineering org structure, engineering ladder (IC levels vs management), how many Staff+ engineers, recent SWE hires and their backgrounds, engineering blog quality, tech stack." Design: "Design org, Head of Design, design team size, recent design hires, design tools and process." Data Science: "Data org, Head of Data/ML, data team composition, recent DS hires, data stack." Marketing: "Marketing org, CMO/VP Marketing, marketing team structure, recent marketing hires, martech stack." CS: "CS org structure, VP/Director CS, CS team size, CS tech stack (Gainsight/Totango/Vitally), whether CS reports to CRO or CEO (critical culture signal), CS-as-revenue-center vs cost-center signal."
 
@@ -90,10 +171,10 @@ Focus on the product area relevant to the target role (or the flagship product i
 **If `career-plan.md` indicates the user is a career changer (no PM title in experience):**
 
 1. **Non-traditional PM precedent:** Search LinkedIn for people at this company who came from non-PM backgrounds. Check for:
-   - **Consulting-to-PM:** People from McKinsey, BCG, Bain, Deloitte, or similar firms who are now PMs at this company. If they exist, note their names and paths -- this is proof the company hires non-traditional PMs.
-   - **Engineering-to-PM:** Engineers who transitioned into PM roles at this company. Search for people whose LinkedIn shows SWE/engineering titles followed by PM titles at the same company or who joined as PMs from engineering roles elsewhere. This signals the company values technical depth in its PMs.
-   - **UXR/Design-to-PM:** Researchers or designers who moved into PM roles. Search for people with UXR, design, or research titles that transitioned to product. This signals the company values user-centricity and research-driven product thinking.
-   If any exist, note their names, previous titles, and current PM roles -- this is proof the company hires from the user's specific background and is the strongest signal for a career changer.
+   - **Consulting-to-PM:** People from McKinsey, BCG, Bain, Deloitte, or similar firms who are now PMs at this company. If they exist, note their names and paths -- this is proof the company hires non-traditional PMs. [For each person found: name, previous company, current PM title, join date (if visible) [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months, LOW if >12 months]]
+   - **Engineering-to-PM:** Engineers who transitioned into PM roles at this company. Search for people whose LinkedIn shows SWE/engineering titles followed by PM titles at the same company or who joined as PMs from engineering roles elsewhere. This signals the company values technical depth in its PMs. [Include: transition date or hire date [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months, LOW if >12 months]]
+   - **UXR/Design-to-PM:** Researchers or designers who moved into PM roles. Search for people with UXR, design, or research titles that transitioned to product. This signals the company values user-centricity and research-driven product thinking. [Include: transition date [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months]]
+   If any exist, note their names, previous titles, current PM roles, and **hire dates** -- this is proof the company hires from the user's specific background. If precedent is found but >12 months old, flag: "[PRECEDENT FOUND but >12 months old. Verify if still representative of current hiring.]"
 2. **MBA-to-PM pipeline:** Does this company recruit from MBA programs? Do they have an APM or rotational program? Even if the user is too senior for APM, it signals openness to non-traditional backgrounds.
 3. **Domain match:** Does the user's industry expertise (from consulting, engineering, UXR, or any other domain) align with this company's domain? A McKinsey consultant who did 3 years of banking engagements has domain expertise for a fintech PM role. An engineer who built ML systems has domain expertise for an AI PM role. A UXR who studied healthcare user behavior has domain expertise for a health-tech PM role. Flag these domain overlaps.
 4. **Culture fit for career changers:** Some companies strongly prefer "internal promotion" or "5+ years PM experience." Others value diverse backgrounds. Glassdoor reviews and recent hire profiles reveal which camp this company falls into.
@@ -122,59 +203,77 @@ Cross-reference `connection-tracker.md` and suggest networking paths:
 **Research date:** [YYYY-MM-DD]
 **Depth:** [quick / deep]
 **Target role:** [role title, or "general"]
+**Data Confidence Summary:** [HIGH / MEDIUM / LOW / MIXED - brief summary]
+**[CAUTION]** if any major data point is >3 months old
 
 ---
 
 ### Company Snapshot
-- **Stage:** [Series X / Public / etc.]
-- **Size:** [employee count]
-- **Revenue model:** [how they make money]
-- **Recent trajectory:** [growing/flat/struggling + key signal]
-- **Core product:** [one-sentence description]
+- **Stage:** [Series X / Public / etc.] [CONFIDENCE: HIGH/MEDIUM/LOW] [Source/Date if needed]
+- **Size:** [employee count] [CONFIDENCE: HIGH/MEDIUM/LOW] [Last verified: date]
+- **Revenue model:** [description]
+- **Recent trajectory:** [growing/flat/struggling] [CONFIDENCE: HIGH/MEDIUM/LOW] [Data from [date]]
+- **Core product:** [description]
 
 ### Product Intelligence
-- **Recent launches:** [bullet list of last 3-6 months]
-- **User sentiment:** [3-5 verbatim quotes from real users, with source]
-- **Competitive position:** [who they compete with, where they win/lose]
-- **Biggest product opportunity:** [your assessment based on research]
+- **Recent launches:** [bullet list with DATES]
+  - [Launch name] - [date] [CONFIDENCE: HIGH if <14 days, MEDIUM if <60 days, LOW if older]
+- **User sentiment:** [3-5 verbatim quotes with SOURCE and DATE]
+  - "[Quote]" (G2, [rating], [date]) [CONFIDENCE: HIGH if <14 days, MEDIUM if <60 days, LOW if older]
+- **Competitive position:** [description] [CONFIDENCE: MEDIUM if 30-90 days old, LOW if >90 days]
+- **Biggest product opportunity:** [assessment] [NOTE: Confidence depends on product data recency]
 
 ### Strategy and Priorities
-- **Leadership says:** [key quotes from CEO/leadership with source]
-- **Stated bets:** [what the company is prioritizing for next 1-2 years]
-- **Culture signals:** [scrappy vs bureaucratic, data-driven vs intuition, etc.]
+- **Leadership says:** [key quotes] [SOURCE: name, title, [publication], [date]] [CONFIDENCE: HIGH if <30 days, MEDIUM if <120 days, LOW if older]
+- **Stated bets:** [what the company is prioritizing] [Data from [date]]
+- **Culture signals:** [assessment based on artifacts] [CONFIDENCE: MEDIUM-HIGH if based on recent job postings/reviews <60 days, MEDIUM if older]
 
 ### Team and Hiring
-- **Product org lead:** [name, title]
-- **Likely hiring manager:** [name, title, LinkedIn URL]
-- **Team size:** [N PMs, organized by X]
-- **Recent PM hires:** [backgrounds of last 2-3 PM hires -- what the company actually values]
-- **Open [FUNCTION-ADAPTIVE] roles:** [count and titles]
+- **Product org lead:** [name, title] [Last verified on LinkedIn: [date]]
+- **Likely hiring manager:** [name, title, LinkedIn URL] [CONFIDENCE: HIGH if found on job board, MEDIUM if inferred from org]
+- **Team size:** [N PMs, organized by X] [Data from [date]]
+- **Recent [FUNCTION-ADAPTIVE] hires:** [backgrounds of last 2-3 hires, with HIRE DATES]
+  - [Name] joined [date] from [background] [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months, LOW if >12 months]
+- **Open roles:** [count and titles] [As of [date]]
 
 ### Career Changer Intel
-- **Non-traditional PM precedent:** [names of people who transitioned from consulting/engineering/UXR/design/other to PM at this company, or "none found" per background type]
-- **MBA pipeline:** [APM program, MBA recruiting, or neither]
-- **Domain match:** [how the user's industry expertise maps]
-- **Culture fit assessment:** [open to non-traditional vs. prefers PM pedigree]
+- **Non-traditional precedent:** 
+  - [FOUND] [Name] joined [Company] from [background] [Hire date: [date]] [CONFIDENCE: HIGH if <6 months, MEDIUM if 6-12 months, LOW if >12 months]
+  - [OR] "None found in past 18 months" [CONFIDENCE: HIGH CONFIDENCE ABSENCE]
+- **Culture fit assessment:** [assessment] [CONFIDENCE: MEDIUM - based on recent reviews and job posting language]
 
 ### Your Connection Map
-- **Direct connections:** [names from connection-tracker]
-- **Alumni connections:** [names from LinkedIn search]
-- **Recommended approach:** [direct referral / alumni intro / cold + work product / build connection first]
+- **Direct connections:** [names] [Last contact: [date]]
+- **Alumni connections:** [names] [Last verified: [date]]
+- **Recommended approach:** [strategy]
+
+### Data Freshness Notes
+
+| Data Type | Age | Confidence | Action Needed |
+|-----------|-----|-----------|---------------|
+| Funding/Stage | [age] | [HIGH/MEDIUM/LOW/STALE] | [Verify? / Safe to use / Refresh before deciding] |
+| Product/Launches | [age] | [HIGH/MEDIUM/LOW/STALE] | [Verify? / Safe to use / Refresh before deciding] |
+| Leadership/Strategy | [age] | [HIGH/MEDIUM/LOW/STALE] | [Verify? / Safe to use / Refresh before deciding] |
+| Team/Hiring | [age] | [HIGH/MEDIUM/LOW/STALE] | [Verify? / Safe to use / Refresh before deciding] |
+| H-1B Sponsorship | [age] | [HIGH/MEDIUM/LOW/STALE] | [Verify? / Safe to use / Refresh before deciding] |
 
 ### Research Hooks for Work Product
-These are ready to feed into `/work-product`:
-1. [Source]: "[specific quote or data point]" -- Implication: [what this means]
-2. [Source]: "[specific quote or data point]" -- Implication: [what this means]
-3. [Source]: "[specific quote or data point]" -- Implication: [what this means]
+Ready to feed into `/work-product`:
+1. [Source]: "[quote]" [DATE: [date]] [CONFIDENCE: HIGH/MEDIUM] — Implication: [what this means]
+2. [Source]: "[quote]" [DATE: [date]] [CONFIDENCE: HIGH/MEDIUM] — Implication: [what this means]
+3. [Source]: "[quote]" [DATE: [date]] [CONFIDENCE: HIGH/MEDIUM] — Implication: [what this means]
 
 ---
 
 ## Recommended Next Steps
+- [ ] [Verify funding round] - data from [date], consider refresh if >30 days old
+- [ ] [Verify org structure] - last checked [date], recheck LinkedIn if >7 days old
+- [ ] [Check for recent hires] - as of [date]
+- [ ] If visa sponsorship needed: [Verify USCIS data] - data from [year]
 - [ ] Add/update this company in `target-companies.md`
 - [ ] If connections exist: run `/referral-request`
 - [ ] If no connections: run `/connection-request` targeting [suggested people]
 - [ ] Run `/work-product` using the research hooks above
-- [ ] Run `/job-fit-scorer` on the target role
 ```
 
 ## Mode 2: Target List Generation
@@ -264,12 +363,16 @@ Preferences: [1-line summary of what drove this list]
 ## Quality Checks
 
 **Single Company Research:**
-- [ ] **User sentiment includes verbatim quotes, not summaries.** "Users say onboarding is hard" is useless. "Setting up Notion for my team was painful. Half the team never moved past their first page" (G2, 2-star review) is useful.
-- [ ] **Hiring manager identification is specific.** Not "probably a Director of Product." Instead: "Jane Smith, Director of Product, Growth -- she has been at [Company] for 2 years and her team owns [area]. LinkedIn: [URL]."
-- [ ] **Recent PM hires section reveals actual hiring patterns.** If the last 3 PM hires all came from FAANG with 5+ years PM experience, that is important context for a career changer. If one came from consulting, that is a green light.
-- [ ] **Research hooks are concrete enough to use in a work product.** Each hook must have a source, a specific quote or data point, and an implication. Vague hooks like "users want better features" are worthless.
-- [ ] **Career changer section is honest.** If no consulting-to-PM precedent exists at this company and the culture leans toward PM-pedigree hires, say so. Do not sugarcoat. The user needs to know where to spend their energy.
-- [ ] **Connection map is actionable.** Not "you might know someone." Instead: "Sarah Kim (Wharton '18) is a PM at [Company]. She's in your connection-tracker -- last contact was 2 weeks ago. Recommend running /referral-request."
+- [ ] **User sentiment includes verbatim quotes, not summaries.** "Users say onboarding is hard" is useless. "Setting up Notion for my team was painful. Half the team never moved past their first page" (G2, 2-star review, 2026-04-15) is useful. [Must include date and confidence level]
+- [ ] **Hiring manager identification is specific.** Not "probably a Director of Product." Instead: "Jane Smith, Director of Product, Growth -- she has been at [Company] for 2 years and her team owns [area]. LinkedIn: [URL]. [Last verified on LinkedIn: 2026-05-10]"
+- [ ] **Recent PM hires section reveals actual hiring patterns with dates.** If the last 3 PM hires all came from FAANG with 5+ years PM experience (hired 2025-2026), that is important context. [Each hire must have a hire date and confidence level based on recency]
+- [ ] **Research hooks are concrete and dated.** Each hook must have a source, a specific quote or data point, a DATE, and an implication. Example: "[Lodgify 2026 Industry Report]: '66% of hosts struggle with direct bookings' [DATE: May 2026] [CONFIDENCE: HIGH] — Implication: Your work product should address this pain point."
+- [ ] **Every major claim includes a confidence level.** Not just "[CONFIDENCE: MEDIUM - based on available sources]" but specific: "[CONFIDENCE: MEDIUM - funding round announced Nov 2022, now May 2026. Consider verifying current burn rate.]"
+- [ ] **STALE data is flagged.** If any data point is >6 months old, there's a [VERIFY] or [CAUTION] warning in the output. Data older than 180 days should NOT be cited without a refresh.
+- [ ] **Absence vs. outdated data is distinguished.** "[None found - searched LinkedIn, h1bdata.info, Glassdoor as of 2026-05-10] [CONFIDENCE: HIGH CONFIDENCE ABSENCE]" (actively searched, found nothing) vs. "[Data from November 2025] [CONFIDENCE: LOW] - recommend refresh before interviews"
+- [ ] **Career changer section is honest about data age.** If precedent found but >12 months old, flag: "[PRECEDENT: [Name] joined 18 months ago from [background]. May no longer be representative of current hiring—verify with recent LinkedIn search.]" If no precedent found, say: "[NONE FOUND in past 18 months - HIGH CONFIDENCE ABSENCE]"
+- [ ] **Connection map is actionable.** Not "you might know someone." Instead: "Sarah Kim (Wharton '18) is a PM at [Company]. She's in your connection-tracker -- last contact was 2 weeks ago (2026-04-28). Recommend running /referral-request."
+- [ ] **Data Freshness Notes table is complete.** Every data type (Funding, Product, Leadership, Team, H-1B) has an age, confidence level, and action recommended. Users can scan this table to see at a glance what's current and what needs refreshing.
 
 **Target List Generation:**
 - [ ] Companies are genuinely relevant to career-plan.md preferences, not a generic "top tech" list
